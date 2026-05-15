@@ -1,0 +1,3 @@
+package com.ideaforge.platform.notifications.domain.exceptions;
+
+public class NotificationNotFoundException extends RuntimeException { public NotificationNotFoundException(Long id) { super("Notification not found with id: " + id); } }
