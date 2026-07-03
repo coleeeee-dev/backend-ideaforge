@@ -29,9 +29,17 @@ public class TeamsCommandServiceImpl implements TeamsCommandService {
         if (!idea.getCreatorProfileId().equals(command.ownerProfileId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the idea owner can remove team members");
         }
-        if (!team.removeMember(command.memberId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Team member not found with id: " + command.memberId());
+
+        var member = team.getMembers().stream()
+                .filter(teamMember -> teamMember.getId().equals(command.memberId()))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Team member not found with id: " + command.memberId()));
+
+        if (member.getProfileId().equals(idea.getCreatorProfileId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "The idea owner cannot be removed from the team");
         }
+
+        member.remove();
         return Optional.of(teamRepository.save(team));
     }
 }
