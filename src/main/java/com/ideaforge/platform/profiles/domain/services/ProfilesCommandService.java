@@ -10,4 +10,5 @@ public interface ProfilesCommandService {
     Optional<Profile> handle(UpdateProfileCommand command);
     Optional<Profile> handle(UpdateProfileSkillsCommand command);
     Optional<Profile> handle(UpdateProfileInterestsCommand command);
+    Optional<Profile> handle(UpdateContactSettingsCommand command);
 }

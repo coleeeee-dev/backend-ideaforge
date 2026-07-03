@@ -33,4 +33,9 @@ public class ProfilesCommandServiceImpl implements ProfilesCommandService {
         profile.updateInterests(command.interests());
         return Optional.of(profileRepository.save(profile));
     }
+    public Optional<Profile> handle(UpdateContactSettingsCommand command) {
+        var profile = profileRepository.findById(command.profileId()).orElseThrow(() -> new ProfileNotFoundException(command.profileId()));
+        profile.updateContactSettings(command.phoneNumber(), command.sharePhoneWithTeam());
+        return Optional.of(profileRepository.save(profile));
+    }
 }

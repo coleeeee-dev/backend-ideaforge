@@ -39,6 +39,12 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> {
     @Column(length = 255)
     private String avatarUrl;
 
+    @Column(length = 20)
+    private String phoneNumber;
+
+    @Column(nullable = false)
+    private boolean sharePhoneWithTeam = false;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private ExperienceLevel experienceLevel = ExperienceLevel.BEGINNER;
@@ -92,6 +98,22 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> {
                     .map(value -> new Interest(this, value))
                     .forEach(this.interests::add);
         }
+    }
+
+    public void updateContactSettings(String phoneNumber, boolean sharePhoneWithTeam) {
+        if (phoneNumber == null || phoneNumber.isBlank()) {
+            this.phoneNumber = null;
+            this.sharePhoneWithTeam = false;
+            return;
+        }
+
+        var normalizedPhoneNumber = phoneNumber.trim();
+        if (normalizedPhoneNumber.length() > 20 || !normalizedPhoneNumber.matches("^\\+[1-9]\\d{1,14}$")) {
+            throw new IllegalArgumentException("Phone number must be in E.164 format");
+        }
+
+        this.phoneNumber = normalizedPhoneNumber;
+        this.sharePhoneWithTeam = sharePhoneWithTeam;
     }
 
     private ExperienceLevel parseExperience(String value) {

@@ -1,10 +1,12 @@
 package com.ideaforge.platform.profiles.interfaces.rest;
 
 import com.ideaforge.platform.profiles.domain.model.queries.*;
+import com.ideaforge.platform.profiles.domain.model.commands.UpdateContactSettingsCommand;
 import com.ideaforge.platform.profiles.domain.services.ProfilesCommandService;
 import com.ideaforge.platform.profiles.domain.services.ProfilesQueryService;
 import com.ideaforge.platform.profiles.interfaces.rest.resources.*;
 import com.ideaforge.platform.profiles.interfaces.rest.transform.*;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -44,4 +46,20 @@ public class ProfilesController {
     public ResponseEntity<?> updateSkills(@PathVariable Long profileId, @RequestBody UpdateProfileSkillsResource resource) { return ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(commandService.handle(UpdateProfileSkillsCommandFromResourceAssembler.toCommandFromResource(profileId, resource)).orElseThrow())); }
     @PutMapping("/{profileId}/interests")
     public ResponseEntity<?> updateInterests(@PathVariable Long profileId, @RequestBody UpdateProfileInterestsResource resource) { return ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(commandService.handle(UpdateProfileInterestsCommandFromResourceAssembler.toCommandFromResource(profileId, resource)).orElseThrow())); }
+    @Operation(summary = "Get private contact settings for the profile owner")
+    @GetMapping("/{profileId}/contact-settings")
+    public ResponseEntity<?> getContactSettings(@PathVariable Long profileId, @RequestParam Long viewerProfileId) {
+        if (!profileId.equals(viewerProfileId)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        var profile = queryService.handle(new GetProfileByIdQuery(profileId));
+        if (profile.isEmpty()) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(new ContactSettingsResource(profile.get().getPhoneNumber(), profile.get().isSharePhoneWithTeam()));
+    }
+    @Operation(summary = "Update private contact settings for the profile owner")
+    @PutMapping("/{profileId}/contact-settings")
+    public ResponseEntity<?> updateContactSettings(@PathVariable Long profileId, @RequestParam Long viewerProfileId, @Valid @RequestBody UpdateContactSettingsResource resource) {
+        if (!profileId.equals(viewerProfileId)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (queryService.handle(new GetProfileByIdQuery(profileId)).isEmpty()) return ResponseEntity.notFound().build();
+        var profile = commandService.handle(new UpdateContactSettingsCommand(profileId, resource.phoneNumber(), resource.sharePhoneWithTeam())).orElseThrow();
+        return ResponseEntity.ok(new ContactSettingsResource(profile.getPhoneNumber(), profile.isSharePhoneWithTeam()));
+    }
 }

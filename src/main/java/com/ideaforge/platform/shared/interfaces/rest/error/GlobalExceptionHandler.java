@@ -10,6 +10,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Locale;
 import java.util.Map;
@@ -38,6 +39,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<MessageResource> handleDataIntegrity(DataIntegrityViolationException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(MessageResource.of("Data integrity violation. Review duplicated or related records."));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<MessageResource> handleResponseStatus(ResponseStatusException ex) {
+        var message = ex.getReason() == null ? ex.getStatusCode().toString() : ex.getReason();
+        return ResponseEntity.status(ex.getStatusCode()).body(MessageResource.of(message));
     }
 
     @ExceptionHandler(Exception.class)

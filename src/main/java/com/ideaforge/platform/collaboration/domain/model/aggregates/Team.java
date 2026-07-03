@@ -1,6 +1,7 @@
 package com.ideaforge.platform.collaboration.domain.model.aggregates;
 
 import com.ideaforge.platform.collaboration.domain.model.entities.TeamMember;
+import com.ideaforge.platform.collaboration.domain.model.valueobjects.MemberStatus;
 import com.ideaforge.platform.collaboration.domain.model.valueobjects.TeamStatus;
 import com.ideaforge.platform.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
@@ -41,5 +42,20 @@ public class Team extends AuditableAbstractAggregateRoot<Team> {
             members.add(new TeamMember(this, profileId, roleName));
         }
         if (!members.isEmpty()) this.status = TeamStatus.ACTIVE;
+    }
+
+    public boolean removeMember(Long memberId) {
+        return members.stream()
+                .filter(member -> member.getId().equals(memberId))
+                .findFirst()
+                .map(member -> {
+                    member.remove();
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    public boolean hasActiveMember(Long profileId) {
+        return members.stream().anyMatch(member -> member.getProfileId().equals(profileId) && member.getMemberStatus() == MemberStatus.ACTIVE);
     }
 }

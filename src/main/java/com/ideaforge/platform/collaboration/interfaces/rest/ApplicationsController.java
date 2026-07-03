@@ -6,6 +6,7 @@ import com.ideaforge.platform.collaboration.domain.model.queries.*;
 import com.ideaforge.platform.collaboration.domain.services.*;
 import com.ideaforge.platform.collaboration.interfaces.rest.resources.ApplyToIdeaResource;
 import com.ideaforge.platform.collaboration.interfaces.rest.transform.*;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -25,8 +26,10 @@ public class ApplicationsController {
     public ResponseEntity<?> getByIdea(@PathVariable Long ideaId) { return ResponseEntity.ok(queryService.handle(new GetApplicationsByIdeaIdQuery(ideaId)).stream().map(ProjectApplicationResourceFromEntityAssembler::toResourceFromEntity).toList()); }
     @GetMapping("/applications/by-applicant/{applicantProfileId}")
     public ResponseEntity<?> getByApplicant(@PathVariable Long applicantProfileId) { return ResponseEntity.ok(queryService.handle(new GetApplicationsByApplicantIdQuery(applicantProfileId)).stream().map(ProjectApplicationResourceFromEntityAssembler::toResourceFromEntity).toList()); }
+    @Operation(summary = "Accept an application as the idea owner")
     @PostMapping("/applications/{applicationId}/accept")
-    public ResponseEntity<?> accept(@PathVariable Long applicationId) { return ResponseEntity.ok(ProjectApplicationResourceFromEntityAssembler.toResourceFromEntity(commandService.handle(new AcceptApplicationCommand(applicationId)).orElseThrow())); }
+    public ResponseEntity<?> accept(@PathVariable Long applicationId, @RequestParam Long ownerProfileId) { return ResponseEntity.ok(ProjectApplicationResourceFromEntityAssembler.toResourceFromEntity(commandService.handle(new AcceptApplicationCommand(applicationId, ownerProfileId)).orElseThrow())); }
+    @Operation(summary = "Reject an application as the idea owner")
     @PostMapping("/applications/{applicationId}/reject")
-    public ResponseEntity<?> reject(@PathVariable Long applicationId) { return ResponseEntity.ok(ProjectApplicationResourceFromEntityAssembler.toResourceFromEntity(commandService.handle(new RejectApplicationCommand(applicationId)).orElseThrow())); }
+    public ResponseEntity<?> reject(@PathVariable Long applicationId, @RequestParam Long ownerProfileId) { return ResponseEntity.ok(ProjectApplicationResourceFromEntityAssembler.toResourceFromEntity(commandService.handle(new RejectApplicationCommand(applicationId, ownerProfileId)).orElseThrow())); }
 }

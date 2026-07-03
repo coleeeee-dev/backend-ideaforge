@@ -41,4 +41,8 @@ public class TeamMember extends AuditableModel {
         this.profileId = profileId;
         this.roleName = roleName == null || roleName.isBlank() ? "Collaborator" : roleName;
     }
+
+    public void remove() {
+        this.memberStatus = MemberStatus.REMOVED;
+    }
 }
