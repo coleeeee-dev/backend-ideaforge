@@ -8,6 +8,7 @@ import com.ideaforge.platform.iam.domain.model.commands.RegisterAccountCommand;
 import com.ideaforge.platform.iam.domain.model.valueobjects.LoginResult;
 import com.ideaforge.platform.iam.domain.services.AuthService;
 import com.ideaforge.platform.iam.infrastructure.persistence.jpa.repositories.AccountRepository;
+import com.ideaforge.platform.shared.security.JwtService;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -15,13 +16,16 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class AuthCommandServiceImpl implements AuthService {
     private final AccountRepository accountRepository;
+    private final JwtService jwtService;
 
-    public AuthCommandServiceImpl(AccountRepository accountRepository) { this.accountRepository = accountRepository; }
+    public AuthCommandServiceImpl(AccountRepository accountRepository, JwtService jwtService) {
+        this.accountRepository = accountRepository;
+        this.jwtService = jwtService;
+    }
 
     @Override
     public Optional<Account> handle(RegisterAccountCommand command) {
@@ -36,8 +40,14 @@ public class AuthCommandServiceImpl implements AuthService {
         String email = command.email().trim().toLowerCase();
         var account = accountRepository.findByEmail(email).orElseThrow(InvalidCredentialsException::new);
         if (!account.isActive() || !account.getPasswordHash().equals(hash(command.password()))) throw new InvalidCredentialsException();
-        var token = "demo-token-" + UUID.randomUUID();
-        return Optional.of(new LoginResult(account.getId(), account.getEmail(), account.getRole(), token));
+        var token = jwtService.generateToken(account.getId(), account.getEmail());
+        return Optional.of(new LoginResult(
+                account.getId(),
+                account.getEmail(),
+                account.getRole(),
+                token,
+                "Bearer",
+                jwtService.getExpirationMinutes()));
     }
 
     public static String hash(String rawPassword) {
